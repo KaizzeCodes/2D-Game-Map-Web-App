@@ -60,3 +60,7 @@ The color palette (including the small colored line on the notes panel) was chos
 Anyone familiar with CSS can easily adjust the colors.
 
 If there is interest from others, I can add a configuration panel to dynamically change the color scheme from within the application.
+
+-- If by some marvel a real person is reading this and appreciates the application, consider buying me a coffee for the next time I sit down to make something nerdy.
+
+[![Buy Me A Coffee](https://cdn.buymeacoffee.com/buttons/default-orange.png)](https://buymeacoffee.com/kaizze)
