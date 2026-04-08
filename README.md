@@ -36,6 +36,7 @@ Dynamically managed folder that stores map data, including images, text, and can
 
 - The top menu allows the user to **Add Map**, generating a new map folder.  
   This was designed with *La‑Mulana* in mind, which contains many smaller interconnected maps.
+  You can also right click a map to delete it, this removes the entire respective folder for that map.
 
 - Each generated map appears in the top menu. Selecting a map loads its **canvas** and **notes section**.
 
