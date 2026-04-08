@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Canvas App</title>
+  <style>
+    html, body { margin: 0; padding: 0; overflow: hidden; background: #0d6f85; font-family: sans-serif; }
+    canvas { display: block; cursor: grab; }
+    canvas:active { cursor: grabbing; }
+
+    #topMenu {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      padding: 12px 24px;
+      background: transparent;
+      backdrop-filter: none;
+      border-radius: 0;
+      box-shadow: none;
+      z-index: 1000;
+    }
+
+    .menuItem {
+      padding: 10px 22px;
+      background: linear-gradient(135deg, #6e0d62 0%, #6e0d62 100%);
+      border-radius: 999px;
+      color: yellow;
+      font-size: 14px;
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      transition: background 0.2s, box-shadow 0.2s;
+      box-shadow: 0 0 6px rgba(110,13,98,0.35);
+      text-shadow:
+        -1px -1px 0 black,
+         1px -1px 0 black,
+        -1px  1px 0 black,
+         1px  1px 0 black;
+    }
+
+    .menuItem:hover {
+      background: linear-gradient(135deg, #6e0d62 0%, #6e0d62 100%);
+      box-shadow: 0 0 10px rgba(110,13,98,0.45);
+      color: yellow;
+      text-shadow:
+        -1px -1px 0 black,
+         1px -1px 0 black,
+        -1px  1px 0 black,
+         1px  1px 0 black;
+    }
+
+    .menuItem.active {
+  background: linear-gradient(135deg, #6e0d62 0%, #6e0d62 100%);
+  box-shadow: 0 0 15px rgba(255,255,0,0.25);
+  color: yellow;
+  text-shadow:
+    -1px -1px 0 black,
+     1px -1px 0 black,
+    -1px  1px 0 black,
+     1px  1px 0 black;
+}
+
+    .placeholder {
+      width: 60px;
+      height: 1px;
+      margin: auto 0;
+      border-radius: 999px;
+      background: rgba(110,13,98,0.6);
+      box-shadow: 0 0 10px rgba(110,13,98,0.8);
+    }
+
+    #modalOverlay, #deleteOverlay, #titleOverlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+
+    #modalBox, #deleteBox, #titleBox {
+      background: #1e1e1e;
+      color: white;
+      padding: 25px;
+      border-radius: 12px;
+      width: 320px;
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    }
+
+    #modalBox input, #titleBox input {
+      padding: 10px;
+      font-size: 16px;
+      border-radius: 6px;
+      border: 1px solid #555;
+      background: #2a2a2a;
+      color: white;
+    }
+
+    #confirmAddMap { display: none; }
+
+    #contextMenu {
+      position: fixed;
+      background: #1e1e1e;
+      border-radius: 6px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+      padding: 8px 0;
+      display: none;
+      z-index: 3000;
+      width: 150px;
+      color: white;
+    }
+
+    .contextItem {
+      padding: 10px 15px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .contextItem:hover { background: #333; }
+
+    #sideNotes {
+  position: fixed;
+  top: 100px;
+  right: 20px;
+  width: 260px;
+  max-height: 70vh;
+  padding: 15px;
+  background: transparent;
+  border: none;
+  border-left: 2px solid #6e0d62;
+  border-radius: 0;
+  color: yellow;
+  font-size: 28px;
+  overflow-y: hidden;
+  resize: none;
+  outline: none;
+  white-space: pre-wrap;
+  text-shadow:
+    -1px -1px 0 black,
+     1px -1px 0 black,
+    -1px  1px 0 black,
+     1px  1px 0 black;
+}
+  </style>
+</head>
+<body>
+
+<div id="topMenu">
+  <div id="addMapBtn" class="menuItem">Add Map</div>
+</div>
+
+<div id="modalOverlay">
+  <div id="modalBox">
+    <div style="font-size:18px; font-weight:bold; text-align:center;">Add New Map</div>
+    <input id="mapNameInput" type="text" placeholder="Enter map name..." />
+    <button id="confirmAddMap">Add</button>
+  </div>
+</div>
+
+<div id="deleteOverlay">
+  <div id="deleteBox">
+    <div style="font-size:18px; font-weight:bold; text-align:center;">Delete Map?</div>
+    <div id="deleteMapName" style="text-align:center; font-size:14px;"></div>
+    <div style="display:flex; gap:10px; justify-content:center;">
+      <button id="confirmDelete" style="padding:8px 15px;">Delete</button>
+      <button id="cancelDelete" style="padding:8px 15px;">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<div id="titleOverlay">
+  <div id="titleBox">
+    <div style="font-size:18px; font-weight:bold; text-align:center;">Room Name</div>
+    <input id="titleInput" type="text" placeholder="Enter room name..." />
+  </div>
+</div>
+
+<div id="contextMenu">
+  <div id="deleteOption" class="contextItem">Delete Map</div>
+</div>
+
+<div id="sideNotes" contenteditable="true"></div>
+
+<canvas id="canvas" width="3840" height="2160"></canvas>
+
+
+<script>
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const topMenu = document.getElementById("topMenu");
+const addMapBtn = document.getElementById("addMapBtn");
+const modalOverlay = document.getElementById("modalOverlay");
+const mapNameInput = document.getElementById("mapNameInput");
+const confirmAddMap = document.getElementById("confirmAddMap");
+const titleOverlay = document.getElementById("titleOverlay");
+const titleInput = document.getElementById("titleInput");
+const contextMenu = document.getElementById("contextMenu");
+const deleteOption = document.getElementById("deleteOption");
+const deleteOverlay = document.getElementById("deleteOverlay");
+const deleteMapName = document.getElementById("deleteMapName");
+const confirmDelete = document.getElementById("confirmDelete");
+const cancelDelete = document.getElementById("cancelDelete");
+const sideNotes = document.getElementById("sideNotes");
+
+let rightClickedItem = null;
+let currentMap = null;
+let placedImages = [];
+let sideNotesText = "";
+let zoom = 0.125;
+let camX = (window.innerWidth / 2) - (3840 * zoom / 2);
+let camY = (window.innerHeight / 2) - (2160 * zoom / 2);
+let isPanning = false;
+let lastMouseX = 0;
+let lastMouseY = 0;
+let snapHighlight = null;
+let saveTimeout = null;
+const SAVE_DELAY = 150;
+let activeTitleImage = null;
+
+let dragItem = null;
+let placeholder = null;
+let dragStartX = 0;
+let dragging = false;
+
+function startDrag(item, e) {
+  if (item === addMapBtn) return;
+  dragItem = item;
+  dragStartX = e.clientX;
+  dragging = false;
+  window.addEventListener("mousemove", onDragMove);
+  window.addEventListener("mouseup", endDrag);
+}
+
+function onDragMove(e) {
+  if (!dragItem) return;
+  const dx = Math.abs(e.clientX - dragStartX);
+  if (!dragging && dx > 5) {
+    dragging = true;
+    placeholder = document.createElement("div");
+    placeholder.className = "placeholder";
+    topMenu.insertBefore(placeholder, dragItem.nextSibling);
+    dragItem.style.opacity = "0.3";
+  }
+  if (!dragging) return;
+  const items = [...topMenu.children].filter(i => i !== addMapBtn && i !== dragItem && i !== placeholder);
+  for (const it of items) {
+    const rect = it.getBoundingClientRect();
+    const mid = rect.left + rect.width / 2;
+    if (e.clientX < mid) {
+      topMenu.insertBefore(placeholder, it);
+      return;
+    }
+  }
+  topMenu.insertBefore(placeholder, addMapBtn);
+}
+
+function endDrag() {
+  if (dragging) {
+    topMenu.insertBefore(dragItem, placeholder);
+    placeholder.remove();
+    placeholder = null;
+    dragItem.style.opacity = "1";
+  }
+  dragItem = null;
+  dragging = false;
+  window.removeEventListener("mousemove", onDragMove);
+  window.removeEventListener("mouseup", endDrag);
+  sendMapOrderToServer();
+}
+
+function sendMapOrderToServer() {
+  const items = topMenu.querySelectorAll(".menuItem[data-map-name]");
+  const order = Array.from(items).map(it => it.dataset.mapName);
+  fetch("/api/global/mapOrder", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ mapOrder: order })
+  });
+}
+
+function clearActiveHighlight() {
+  const items = topMenu.querySelectorAll(".menuItem");
+  items.forEach(it => it.classList.remove("active"));
+}
+
+function setActiveMap(name) {
+  clearActiveHighlight();
+  const items = topMenu.querySelectorAll(".menuItem");
+  items.forEach(it => { if (it.dataset.mapName === name) it.classList.add("active"); });
+}
+
+function buildLayout() {
+  const images = placedImages.map(obj => ({
+    file: obj.file,
+    x: obj.x,
+    y: obj.y,
+    title: obj.title ?? "",
+    left: obj.left ? obj.left.file : null,
+    right: obj.right ? obj.right.file : null,
+    top: obj.top ? obj.top.file : null,
+    bottom: obj.bottom ? obj.bottom.file : null
+  }));
+  return { images, zoom, panX: camX, panY: camY, sideNotes: sideNotesText };
+}
+
+async function doSaveLayout() {
+  if (!currentMap) return;
+  const layout = buildLayout();
+  await fetch(`/api/maps/${encodeURIComponent(currentMap)}/layout`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(layout)
+  });
+}
+
+function scheduleSave() {
+  if (!currentMap) return;
+  if (saveTimeout) clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(() => { saveTimeout = null; doSaveLayout(); }, SAVE_DELAY);
+}
+
+async function forceSaveCurrent() {
+  if (!currentMap) return;
+  if (saveTimeout) { clearTimeout(saveTimeout); saveTimeout = null; }
+  await doSaveLayout();
+}
+
+async function loadLayoutForMap(name) {
+  const res = await fetch(`/api/maps/${encodeURIComponent(name)}/layout`);
+  const layout = await res.json();
+  zoom = layout.zoom ?? 0.125;
+  camX = layout.panX ?? ((window.innerWidth / 2) - (3840 * zoom / 2));
+  camY = layout.panY ?? ((window.innerHeight / 2) - (2160 * zoom / 2));
+  placedImages = [];
+  snapHighlight = null;
+  sideNotesText = layout.sideNotes ?? "";
+  sideNotes.textContent = sideNotesText;
+  const entries = layout.images || [];
+  if (entries.length === 0) { redraw(); return; }
+  const fileToObj = {};
+  let remaining = entries.length;
+  entries.forEach(entry => {
+    const img = new Image();
+    img.onload = () => {
+      const obj = { img, file: entry.file, x: entry.x, y: entry.y, title: entry.title ?? "", left: null, right: null, top: null, bottom: null };
+      placedImages.push(obj);
+      fileToObj[entry.file] = obj;
+      remaining--;
+      if (remaining === 0) {
+        entries.forEach(e => {
+          const obj2 = fileToObj[e.file];
+          if (e.left && fileToObj[e.left]) obj2.left = fileToObj[e.left];
+          if (e.right && fileToObj[e.right]) obj2.right = fileToObj[e.right];
+          if (e.top && fileToObj[e.top]) obj2.top = fileToObj[e.top];
+          if (e.bottom && fileToObj[e.bottom]) obj2.bottom = fileToObj[e.bottom];
+        });
+        redraw();
+      }
+    };
+    img.src = `/maps/${encodeURIComponent(name)}/${encodeURIComponent(entry.file)}`;
+  });
+}
+
+async function loadMaps() {
+  const res = await fetch("/api/maps");
+  const data = await res.json();
+  let mapsArray = [];
+  if (data && Array.isArray(data.maps)) mapsArray = data.maps;
+  mapsArray.forEach(name => {
+    if (typeof name === "string" && name.trim().length > 0) addMenuItem(name);
+  });
+  currentMap = null;
+  clearActiveHighlight();
+  placedImages = [];
+  snapHighlight = null;
+  sideNotesText = "";
+  sideNotes.textContent = "";
+  zoom = 0.125;
+  camX = (window.innerWidth / 2) - (3840 * zoom / 2);
+  camY = (window.innerHeight / 2) - (2160 * zoom / 2);
+  redraw();
+}
+
+loadMaps();
+
+function addMenuItem(name) {
+  const item = document.createElement("div");
+  item.className = "menuItem";
+  item.textContent = name;
+  item.dataset.mapName = name;
+  item.addEventListener("mousedown", e => startDrag(item, e));
+  item.addEventListener("click", async () => {
+    if (dragging) return;
+    if (currentMap === name) return;
+    await forceSaveCurrent();
+    currentMap = name;
+    setActiveMap(name);
+    await loadLayoutForMap(name);
+  });
+  item.addEventListener("contextmenu", e => {
+    e.preventDefault();
+    rightClickedItem = item;
+    contextMenu.style.left = e.clientX + "px";
+    contextMenu.style.top = e.clientY + "px";
+    contextMenu.style.display = "block";
+  });
+  topMenu.insertBefore(item, addMapBtn);
+}
+
+document.addEventListener("click", () => { contextMenu.style.display = "none"; });
+
+deleteOption.onclick = () => {
+  contextMenu.style.display = "none";
+  const name = rightClickedItem.dataset.mapName;
+  deleteMapName.textContent = `Delete "${name}"?`;
+  deleteOverlay.style.display = "flex";
+};
+
+cancelDelete.onclick = () => { deleteOverlay.style.display = "none"; };
+
+confirmDelete.onclick = async () => {
+  const name = rightClickedItem.dataset.mapName;
+  const res = await fetch(`/api/maps/${encodeURIComponent(name)}`, { method: "DELETE" });
+  const data = await res.json();
+  if (!data.success) { alert(data.error); return; }
+  rightClickedItem.remove();
+  deleteOverlay.style.display = "none";
+  if (currentMap === name) {
+    currentMap = null;
+    clearActiveHighlight();
+    placedImages = [];
+    snapHighlight = null;
+    sideNotesText = "";
+    sideNotes.textContent = "";
+    zoom = 0.125;
+    camX = (window.innerWidth / 2) - (3840 * zoom / 2);
+    camY = (window.innerHeight / 2) - (2160 * zoom / 2);
+    redraw();
+  }
+  sendMapOrderToServer();
+};
+
+addMapBtn.onclick = () => {
+  modalOverlay.style.display = "flex";
+  mapNameInput.value = "";
+  mapNameInput.focus();
+};
+
+confirmAddMap.onclick = async () => {
+  const name = mapNameInput.value.trim();
+  if (name.length === 0) return;
+  const res = await fetch("/api/maps", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name })
+  });
+  const data = await res.json();
+  if (!data.success) { alert(data.error); return; }
+  addMenuItem(data.name);
+  modalOverlay.style.display = "none";
+  await forceSaveCurrent();
+  currentMap = data.name;
+  setActiveMap(currentMap);
+  await loadLayoutForMap(currentMap);
+  sendMapOrderToServer();
+};
+
+mapNameInput.addEventListener("keydown", e => {
+  if (e.key === "Escape") modalOverlay.style.display = "none";
+  if (e.key === "Enter") confirmAddMap.click();
+});
+
+modalOverlay.onclick = e => { if (e.target === modalOverlay) modalOverlay.style.display = "none"; };
+
+sideNotes.addEventListener("input", () => {
+  sideNotesText = sideNotes.textContent;
+  scheduleSave();
+});
+
+function openTitleDialog(imgObj) {
+  activeTitleImage = imgObj;
+  titleInput.value = imgObj.title ?? "";
+  titleOverlay.style.display = "flex";
+  titleInput.focus();
+  titleInput.select();
+}
+
+titleInput.addEventListener("keydown", e => {
+  if (e.key === "Escape") {
+    titleOverlay.style.display = "none";
+    activeTitleImage = null;
+  }
+  if (e.key === "Enter") {
+    if (activeTitleImage) {
+      activeTitleImage.title = titleInput.value;
+      scheduleSave();
+      redraw();
+    }
+    titleOverlay.style.display = "none";
+    activeTitleImage = null;
+  }
+});
+
+titleOverlay.onclick = e => { if (e.target === titleOverlay) { titleOverlay.style.display = "none"; activeTitleImage = null; } };
+
+canvas.addEventListener("contextmenu", e => {
+  e.preventDefault();
+  if (!currentMap) return;
+  const { x, y } = screenToWorld(e.clientX, e.clientY);
+  for (const imgObj of placedImages) {
+    if (x >= imgObj.x && x <= imgObj.x + imgObj.img.width && y >= imgObj.y && y <= imgObj.y + imgObj.img.height) {
+      openTitleDialog(imgObj);
+      return;
+    }
+  }
+});
+
+function findNearestImage(x, y) {
+  let nearest = null;
+  let minDist = Infinity;
+  for (const imgObj of placedImages) {
+    const cx = imgObj.x + imgObj.img.width / 2;
+    const cy = imgObj.y + imgObj.img.height / 2;
+    const dist = Math.hypot(cx - x, cy - y);
+    if (dist < minDist) { minDist = dist; nearest = imgObj; }
+  }
+  return nearest;
+}
+
+function linkImages(target, newObj, side) {
+  if (side === "left") { target.left = newObj; newObj.right = target; }
+  if (side === "right") { target.right = newObj; newObj.left = target; }
+  if (side === "top") { target.top = newObj; newObj.bottom = target; }
+  if (side === "bottom") { target.bottom = newObj; newObj.top = target; }
+}
+
+function computeSnapZone(target, cursorX, cursorY, newImg = null) {
+  const margin = 10;
+  const zones = [];
+  const leftCenter = { x: target.x, y: target.y + target.img.height / 2 };
+  const rightCenter = { x: target.x + target.img.width, y: target.y + target.img.height / 2 };
+  const topCenter = { x: target.x + target.img.width / 2, y: target.y };
+  const bottomCenter = { x: target.x + target.img.width / 2, y: target.y + target.img.height };
+  if (!target.left) zones.push({ side: "left", dist: Math.hypot(cursorX - leftCenter.x, cursorY - leftCenter.y), x: newImg ? target.x - newImg.width - margin : null, y: newImg ? target.y : null });
+  if (!target.right) zones.push({ side: "right", dist: Math.hypot(cursorX - rightCenter.x, cursorY - rightCenter.y), x: newImg ? target.x + target.img.width + margin : null, y: newImg ? target.y : null });
+  if (!target.top) zones.push({ side: "top", dist: Math.hypot(cursorX - topCenter.x, cursorY - topCenter.y), x: newImg ? target.x : null, y: newImg ? target.y - newImg.height - margin : null });
+  if (!target.bottom) zones.push({ side: "bottom", dist: Math.hypot(cursorX - bottomCenter.x, cursorY - bottomCenter.y), x: newImg ? target.x : null, y: newImg ? target.y + target.img.height + margin : null });
+  if (zones.length === 0) return null;
+  zones.sort((a, b) => a.dist - b.dist);
+  return zones[0];
+}
+
+document.addEventListener("dragover", e => {
+  const dt = e.dataTransfer;
+  const isFileDrag = dt && Array.from(dt.types || []).includes("Files");
+  if (!isFileDrag) return;
+  e.preventDefault();
+  if (!currentMap || placedImages.length === 0) {
+    snapHighlight = null;
+    redraw();
+    return;
+  }
+  const { x, y } = screenToWorld(e.clientX, e.clientY);
+  const nearest = findNearestImage(x, y);
+  if (!nearest) {
+    snapHighlight = null;
+    redraw();
+    return;
+  }
+  const snap = computeSnapZone(nearest, x, y);
+  if (!snap) {
+    snapHighlight = null;
+    redraw();
+    return;
+  }
+  const radius = 200;
+  let cx, cy;
+  if (snap.side === "left") {
+    cx = nearest.x;
+    cy = nearest.y + nearest.img.height / 2;
+  } else if (snap.side === "right") {
+    cx = nearest.x + nearest.img.width;
+    cy = nearest.y + nearest.img.height / 2;
+  } else if (snap.side === "top") {
+    cx = nearest.x + nearest.img.width / 2;
+    cy = nearest.y;
+  } else {
+    cx = nearest.x + nearest.img.width / 2;
+    cy = nearest.y + nearest.img.height;
+  }
+  snapHighlight = { cx, cy, radius };
+  redraw();
+});
+
+document.addEventListener("drop", async e => {
+  const dt = e.dataTransfer;
+  const isFileDrag = dt && Array.from(dt.types || []).includes("Files");
+  if (!isFileDrag) return;
+  e.preventDefault();
+  snapHighlight = null;
+  if (!currentMap) {
+    redraw();
+    return;
+  }
+  const file = e.dataTransfer.files[0];
+  if (!file || !file.type.startsWith("image/")) {
+    redraw();
+    return;
+  }
+  const formData = new FormData();
+  formData.append("file", file);
+  const res = await fetch(`/api/maps/${encodeURIComponent(currentMap)}/upload`, {
+    method: "POST",
+    body: formData
+  });
+  const data = await res.json();
+  if (!data.success) {
+    alert(data.error);
+    redraw();
+    return;
+  }
+  const img = new Image();
+  img.onload = () => {
+    let { x, y } = screenToWorld(e.clientX, e.clientY);
+    if (placedImages.length > 0) {
+      const nearest = findNearestImage(x, y);
+      const snap = computeSnapZone(nearest, x, y, img);
+      if (snap) {
+        x = snap.x;
+        y = snap.y;
+        const newObj = { img, file: data.file, x, y, title: "", left: null, right: null, top: null, bottom: null };
+        linkImages(nearest, newObj, snap.side);
+        placedImages.push(newObj);
+      } else {
+        x -= img.width / 2;
+        y -= img.height / 2;
+        placedImages.push({ img, file: data.file, x, y, title: "", left: null, right: null, top: null, bottom: null });
+      }
+    } else {
+      x -= img.width / 2;
+      y -= img.height / 2;
+      placedImages.push({ img, file: data.file, x, y, title: "", left: null, right: null, top: null, bottom: null });
+    }
+    redraw();
+    scheduleSave();
+  };
+  img.src = `/maps/${encodeURIComponent(currentMap)}/${encodeURIComponent(data.file)}`;
+});
+
+canvas.addEventListener("mousedown", e => {
+  if (e.button === 0) {
+    e.preventDefault();
+    isPanning = true;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+  }
+});
+
+window.addEventListener("mousemove", e => {
+  if (isPanning) {
+    const dx = e.clientX - lastMouseX;
+    const dy = e.clientY - lastMouseY;
+    camX += dx;
+    camY += dy;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+    redraw();
+    scheduleSave();
+  }
+});
+
+window.addEventListener("mouseup", () => { isPanning = false; });
+
+canvas.addEventListener("wheel", e => {
+  e.preventDefault();
+  const zoomFactor = 1.1;
+  const mouseX = e.clientX;
+  const mouseY = e.clientY;
+  const before = screenToWorld(mouseX, mouseY);
+  zoom *= e.deltaY < 0 ? zoomFactor : 1 / zoomFactor;
+  const after = screenToWorld(mouseX, mouseY);
+  camX += (after.x - before.x) * zoom;
+  camY += (after.y - before.y) * zoom;
+  redraw();
+  scheduleSave();
+}, { passive: false });
+
+function drawBackground() {
+  ctx.fillStyle = "#034a4a";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function screenToWorld(x, y) {
+  return { x: (x - camX) / zoom, y: (y - camY) / zoom };
+}
+
+function drawTitle(imgObj) {
+  if (!imgObj.title) return;
+  ctx.save();
+  ctx.font = `${20 / zoom}px sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "top";
+  const textX = imgObj.x + imgObj.img.width / 2;
+  const textY = imgObj.y + 100;
+  ctx.lineWidth = 4 / zoom;
+  ctx.strokeStyle = "black";
+  ctx.strokeText(imgObj.title, textX, textY);
+  ctx.fillStyle = "yellow";
+  ctx.fillText(imgObj.title, textX, textY);
+  ctx.restore();
+}
+
+function redraw() {
+  ctx.setTransform(1,0,0,1,0,0);
+  drawBackground();
+  ctx.setTransform(zoom,0,0,zoom,camX,camY);
+  for (const imgObj of placedImages) {
+    ctx.drawImage(imgObj.img, imgObj.x, imgObj.y);
+    drawTitle(imgObj);
+  }
+  if (snapHighlight) {
+    ctx.save();
+    ctx.strokeStyle = "rgba(0,255,255,0.9)";
+    ctx.lineWidth = 4 / zoom;
+    ctx.shadowColor = "rgba(0,255,255,0.8)";
+    ctx.shadowBlur = 25 / zoom;
+    ctx.beginPath();
+    ctx.arc(snapHighlight.cx, snapHighlight.cy, snapHighlight.radius, 0, Math.PI*2);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+redraw();
+</script>
+
+</body>
+</html>
