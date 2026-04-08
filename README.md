@@ -9,10 +9,15 @@
 File Structure:
 
 -Maps
+
 --[Application will generate map folders]
+
 -global.json
+
 -index.html
+
 -server.js
+
 -Launch_app.bat
 
 Description of elements:
