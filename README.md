@@ -56,8 +56,7 @@ Dynamically managed folder that stores map data, including images, text, and can
 
 ## Notes
 
-The color palette (including the small colored line on the notes panel) was chosen simply because I find it visually pleasing.  
-Anyone familiar with CSS can easily adjust the colors.
+The color palette (including the small colored line on the notes panel) was chosen simply because I find it visually pleasing. Anyone familiar with CSS can easily adjust the colors.
 
 If there is interest from others, I can add a configuration panel to dynamically change the color scheme from within the application.
 
