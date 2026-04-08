@@ -20,11 +20,12 @@ Frontend for the application, containing the canvas, UI, snapping logic, and not
 **global.json**  
 Stores the order of maps displayed in the top menu.
 
-**Launch_App.bat**
+**Launch_App.bat**  
 This will attempt to install Express.js if it's not already installed.
 This will add more files/folders.
 Once Express.js is installed running it will leave a command prompt window open this is your backend "server" for the application.
 Open your browser (this was designed and tested using Chrome) and go to the url "http://localhost:3000/".
+Keep in mind you must leave the command prompt open while using the application.
 
 **Maps/**  
 Dynamically managed folder that stores map data, including images, text, and canvas layout parameters.
