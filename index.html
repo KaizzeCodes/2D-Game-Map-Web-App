@@ -312,6 +312,7 @@ function buildLayout() {
 
 async function doSaveLayout() {
   if (!currentMap) return;
+  updateSideNotesText();
   const layout = buildLayout();
   await fetch(`/api/maps/${encodeURIComponent(currentMap)}/layout`, {
     method: "POST",
@@ -341,7 +342,7 @@ async function loadLayoutForMap(name) {
   placedImages = [];
   snapHighlight = null;
   sideNotesText = layout.sideNotes ?? "";
-  sideNotes.textContent = sideNotesText;
+  sideNotes.innerHTML = sideNotesText.replace(/\n/g, "<br>");
   const entries = layout.images || [];
   if (entries.length === 0) { redraw(); return; }
   const fileToObj = {};
@@ -480,7 +481,7 @@ mapNameInput.addEventListener("keydown", e => {
 modalOverlay.onclick = e => { if (e.target === modalOverlay) modalOverlay.style.display = "none"; };
 
 sideNotes.addEventListener("input", () => {
-  sideNotesText = sideNotes.textContent;
+  updateSideNotesText();
   scheduleSave();
 });
 
@@ -736,6 +737,14 @@ function redraw() {
     ctx.stroke();
     ctx.restore();
   }
+}
+
+function updateSideNotesText() {
+  sideNotesText = sideNotes.innerHTML
+    .replace(/<div>/gi, "\n")
+    .replace(/<\/div>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .trim();
 }
 
 redraw();
